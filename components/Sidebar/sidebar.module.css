@@ -1,0 +1,31 @@
+.side-bar{
+    min-height: 800px;
+    width: 300px;
+    position: absolute;
+    background-color: #fff;
+    border-radius: 8px;
+   
+}
+
+.side-nav{
+    display: flex;
+    flex-direction: column;
+    padding: 30px 15px;
+    min-height: 750px;
+    
+}
+.links-container{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.sidebar-link{
+    display: flex;
+    gap: 8px;
+    padding: 20px 10px;
+    border-radius: 8px;
+}
+.sidebar-link:hover{
+    background-color: #f0f6fe;
+}
+

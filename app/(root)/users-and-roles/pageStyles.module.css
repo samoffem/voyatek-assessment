@@ -1,0 +1,13 @@
+.table-actions{
+    height: 90px;
+    background-color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+}
+.input-wrapper{
+    border: 1px solid #CBD5e1;
+    padding: 3px;
+    border-radius: 5px;
+}
