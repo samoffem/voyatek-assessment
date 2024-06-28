@@ -245,7 +245,7 @@ const UsersAndRoles = () => {
                 </div>
                 <div className={styles['btn-wrap']}>
                     
-                        <button onClick={openDialog} className="flex items-center gap-2 rounded text-white bg-[#0d6efd] py-1 px-2 text-[11px]">
+                        <button onClick={openDialog} className="border-none flex items-center gap-2 rounded text-white bg-[#0d6efd] py-1 px-2 text-[11px]">
                             <Image 
                                 src='/icons/btnIcon2.svg'
                                 width={20}
