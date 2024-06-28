@@ -12,7 +12,7 @@ body{
   background-color: #F0F2F5;
   overscroll-behavior: none;
   width: 100vw;
-  overflow-x: hidden;
+  
 }
 @layer utilities{
 
@@ -28,9 +28,15 @@ body{
     @apply  font-semibold text-gray-100;
   }
   .header-right-nav-link{
-    @apply flex flex-col items-center gap-2 items-center;
+    @apply flex flex-col items-center gap-1 items-center ;
   }
   .header-text {
-    @apply text-xs text-gray-100
+    @apply text-[10px] text-gray-100
+  }
+  .modal-form-input{
+    @apply border border-[#d0d5dd] rounded font-light text-xs mt-0;
+  }
+  .modal-form-label{
+    @apply text-[#475367] text-[11px] font-normal;
   }
 }

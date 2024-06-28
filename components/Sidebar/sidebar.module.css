@@ -1,10 +1,20 @@
 .side-bar{
-    min-height: 800px;
-    width: 300px;
+   
+    width: 400px;
     position: absolute;
+    height: 100vh;
+    
+    
+   
+}
+.inner-wrap{
+    width: 300px;
     background-color: #fff;
     border-radius: 8px;
-   
+    min-height: 800px;
+    position: absolute;
+    top: 30px;
+    left: 30px;
 }
 
 .side-nav{
@@ -21,7 +31,8 @@
 }
 .sidebar-link{
     display: flex;
-    gap: 8px;
+    gap: 5px;
+    align-items: center;
     padding: 20px 10px;
     border-radius: 8px;
 }

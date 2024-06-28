@@ -26,7 +26,7 @@ const Header = () => {
         </div>
       </div>
 
-      <div className={`flex gap-3 ${styles['right-nav']}`}>
+      <div className={`flex gap-4 items-center ${styles['right-nav']}`}>
 
         <Link href='/' className={`header-right-nav-link styles['navigation']`}>
           <Image 
@@ -65,8 +65,14 @@ const Header = () => {
           <p className='header-text'>Settings</p>
         </Link>
 
-        <div className={styles['profile-img']}>
-            
+        <div className={`w-10 h-10 rounded-full bg-[#f0f2f5] relative flex items-center justify-center cursor-pointer`}>
+          <Image 
+            src='/icons/user.svg'
+            width={20}
+            height={20}
+            alt='pic'
+          
+          />
         </div>
 
       </div>

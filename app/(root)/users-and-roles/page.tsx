@@ -2,6 +2,10 @@
 import  SlashIcon  from "@/public/icons/slashIcon.svg"
 import styles from './pageStyles.module.css'
 import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Skeleton } from "@/components/ui/skeleton"
+import {toast} from 'sonner'
+
  
 import {
   Breadcrumb,
@@ -72,41 +76,35 @@ import { Label } from "@/components/ui/label"
 import Image from "next/image"
 import { useEffect, useState } from "react"
 import axios from "axios"
+import Modal from "@/components/Modal/Modal"
+import { useToast } from "@/components/ui/use-toast"
 
-const frameworks = [
-    {
-      value: "Admin",
-      label: "Admin",
-    },
-    {
-      value: "sales-manager",
-      label: "Sales Manager",
-    },
-    {
-      value: "representative",
-      label: "Representative",
-    },
-    
-  ]
-  
+type User = {
+    id: string
+    full_name: string
+    email: string
+    password: string
+    role: string
+}
 
-const formSchema = z.object({
-    email: z.string().min(2, {
-      message: "Username must be at least 2 characters.",
-    }),
-    full_name: z.string(),
-    password: z.string()
-  })
-  
 
+const baseurl = process.env.NEXT_PUBLIC_BASEURL!
 const UsersAndRoles = () => {
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [open, setOpen] = useState(false)
-  const [value, setValue] = useState("")
 
+    const [loader, setLoader] = useState(false)
+    const [loading, setLoading] = useState(false)
+
+    const [users, setUsers] = useState<User[]>([])
+    const [refetch, setRefetch] = useState(false)
+    const [actionType, setActiontype] = useState<'create' | 'edit' | 'delete' | ''>('')
+    const [selectedUser, setSelectedUser] = useState<User>()
+    // const { toast } = useToast()
 
     const openDialog = () => {
+        setSelectedUser(undefined)
+        setActiontype('create')
         setIsDialogOpen(true);
     };
 
@@ -114,35 +112,80 @@ const UsersAndRoles = () => {
         setIsDialogOpen(false);
     };
 
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
-          email: "",
-          full_name: "",
-          password: ""
-        },
-      })
-     
-      // 2. Define a submit handler.
-      function onSubmit(values: z.infer<typeof formSchema>) {
-        // Do something with the form values.
-        // ✅ This will be type-safe and validated.
-        console.log(values)
-      }
+   
 
     useEffect(()=>{
         const fetchUsers = async ()=>{
             try {
                 
-                const data = await axios.get('https://ca349cc21366a8827049.free.beeceptor.com/api/users/')
-                console.log(data)
+                const {data} = await axios.get(baseurl)
+                setUsers(data)
             } catch (error) {
                 console.log(error)
             }
         }
 
         fetchUsers()
-    })
+    }, [refetch])
+
+    const createUser = async(data: {email: string, full_name: string, role: string, password: string} )=>{
+        setLoader(true)
+        try {
+            
+            const res = await axios.post(baseurl, {...data, id: Date.now().toString(36)})
+            setRefetch(prev=> !prev)
+            setLoader(false)
+            setIsDialogOpen(false)
+            toast.success('User has been added')
+            
+        } catch (error) {
+            setLoader(false)
+            toast.error('There was a problem with your request')
+        }
+    }
+
+    const handleEdit = (user: User)=>{
+        setActiontype('edit')
+        setIsDialogOpen(true)
+        setSelectedUser(user)
+    }
+    const updateUser = async (d: {email: string, full_name: string, role: string, password: string})=> {
+        setLoader(true)
+        try {
+            const {data} =await axios.patch(`${baseurl}${selectedUser?.id}`,d )
+            setLoader(false)
+            setRefetch(prev=> !prev)
+            setIsDialogOpen(false)
+            toast.success('User has been updated')
+        } catch (error) {
+            setLoader(false)
+            console.log(error)
+            toast.error('There was a problem with your request')
+        }
+    }
+
+    const deleteUser = async (d: {email: string, full_name: string, role: string, password: string})=>{
+        setLoader(true)
+        try {
+            const {data} = await axios.delete(`${baseurl}${selectedUser?.id}`)
+            setRefetch(prev=> !prev)
+            setIsDialogOpen(false)
+            setLoader(false)
+            toast.success('User has been deleted')
+        } catch (error) {
+            setLoader(false)
+            console.log(error)
+            toast.error('There was a problem with your request')
+           
+        }
+
+    }
+
+    const handleRemove = (user: User)=>{
+        setActiontype('delete')
+        setIsDialogOpen(true)
+        setSelectedUser(user)
+    }
   return (
     <section>
 
@@ -150,11 +193,11 @@ const UsersAndRoles = () => {
             <Breadcrumb>
                 <BreadcrumbList>
                     <BreadcrumbItem>
-                    <BreadcrumbLink href="/">Settings</BreadcrumbLink>
+                    <BreadcrumbLink href="/" className="text-[#98a2b3] text-[13px]">Settings</BreadcrumbLink>
                     </BreadcrumbItem>
                     <BreadcrumbSeparator />
                     <BreadcrumbItem>
-                    <BreadcrumbLink href="/components">Users and Roles</BreadcrumbLink>
+                    <BreadcrumbLink href="/components" className="text-[#98a2b3] text-xs">Users and Roles</BreadcrumbLink>
                     </BreadcrumbItem>
                     <BreadcrumbSeparator />
                     {/* <BreadcrumbItem>
@@ -163,41 +206,42 @@ const UsersAndRoles = () => {
                 </BreadcrumbList>
             </Breadcrumb>
         </div>
-        <div className="mt-10">
-            <h2 className="font-bold text-xl">Users and Roles</h2>
-            <p className="text-base font-light text-gray-100 mt-4">Manage all users in your business</p>
+        <div className="mt-4">
+            <h2 className="font-normal text-xl">Users and Roles</h2>
+            <p className="text-xs font-light text-gray-100 mt-4">Manage all users in your business</p>
         </div>
-        <div className={`flex gap-3 ${styles['tab']}`}>
-            <p>Users</p>
-            <p>Roles</p>
+        <div className={`flex gap-3 mt-3 text-[11px] font-semibold text-[#98a2b3] ${styles['tab']}`}>
+            <p className="py-2 px-2 border-b-2 text-blue-600">Users</p>
+            <p className="py-2 px-2">Roles</p>
         </div>
 
-        <div className={`mt-5 ${styles['table-wrap']}`}>
-            <div className={styles['table-actions']}>
+        <div className={`mt-3 ${styles['table-wrap']}`}>
+            <div className={`h-[60px] flex items-center justify-between py-4 px-4 bg-white rounded-t`}>
                 <div className={`flex gap-3 items-center ${styles['actions-left']}`}>
-                    <div className={`flex ${styles['input-wrapper']}`}>
+                    <div className={`flex gap-1 items-center px-1 py-1 rounded border border-[#cbd5e1]  ${styles['input-wrapper']}`}>
                         <Image 
                             src='/icons/searchIcon.svg'
-                            width={20}
-                            height={20}
+                            width={14}
+                            height={14}
                             alt='search'
+                            className="h-[14px]"
                         />
-                        <Input  type="text" placeholder="Search here" className={`border-none flex-1 bg-inherit ${styles['input']}`} />
+                        <Input  type="text" placeholder="Search here" className={`border-none flex-1 bg-inherit py-0 px-1 h-[20px] text-[12px]`} />
                     </div>
 
-                    <div className="flex gap-2 px-3 py-3 items-center rounded bg-[#F0F2F5]">
+                    <div className="flex gap-1 px-1 py-1 items-center rounded bg-white border border-[#cbd5e1] text-[12px]">
                         <Image 
                             src='/icons/btnIcon1.svg'
-                            width={20}
-                            height={20}
+                            width={14}
+                            height={14}
                             alt='search'
                         />
-                        <span>filter</span>
+                        <span>Filter</span>
                     </div>
                 </div>
                 <div className={styles['btn-wrap']}>
                     
-                        <button onClick={openDialog} className="flex items-center gap-2 rounded text-white bg-[#0d6efd] py-2 px-3">
+                        <button onClick={openDialog} className="flex items-center gap-2 rounded text-white bg-[#0d6efd] py-1 px-2 text-[11px]">
                             <Image 
                                 src='/icons/btnIcon2.svg'
                                 width={20}
@@ -209,132 +253,104 @@ const UsersAndRoles = () => {
                 </div>
             </div>
 
-            <div className={styles['table-main']}>
-            <Table>
-                <TableCaption>A list of your recent invoices.</TableCaption>
-                <TableHeader>
-                    <TableRow>
-                    <TableHead className="w-[100px]">Invoice</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Method</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    <TableRow>
-                    <TableCell className="font-medium">INV001</TableCell>
-                    <TableCell>Paid</TableCell>
-                    <TableCell>Credit Card</TableCell>
-                    <TableCell className="text-right">$250.00</TableCell>
-                    </TableRow>
-                </TableBody>
-            </Table>
+            {users.length > 0 && 
+            <div className={` ${styles['table-main']}`}>
+                <Table>
+                    
+                    <TableHeader className="text-[10px]">
+                        <TableRow className="border-none text-center">
+                            <TableHead className="">
+                                <Checkbox id="terms" className="border border-[#cbd5e1] rounded" />
+                            </TableHead>
+                            <TableHead className="">
+                                <div className="flex gap-1 items-center">
+                                    <p>Name</p>
+                                    <Image 
+                                        src="/icons/chevronV.svg"
+                                        width={16}
+                                        height={16}
+                                        alt="icon"
+                                    />
+                                </div>
+                            </TableHead>
+                            <TableHead>
+                            <   div className="flex gap-1 items-center">
+                                    <p>Email Address</p>
+                                    <Image 
+                                        src="/icons/chevronV.svg"
+                                        width={16}
+                                        height={16}
+                                        alt="icon"
+                                    />
+                                </div>
+                            </TableHead>
+                            <TableHead>
+                                <div className="flex gap-1 items-center">
+                                    <p>Role</p>
+                                    <Image 
+                                        src="/icons/chevronV.svg"
+                                        width={16}
+                                        height={16}
+                                        alt="icon"
+                                    />
+                                </div>
+                            </TableHead>
+                            <TableHead className="w-[100px]">Action</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody className=" bg-white text-[#344054] font-light text-xs">
+                        {
+                            users.map(user=>(
 
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen} >
-                {/* <DialogTrigger asChild>
-                    <Button variant="outline">Edit Profile</Button>
-                </DialogTrigger> */}
-                <DialogOverlay className="bg-black-200 opacity-50">
-
-                <DialogContent className="sm:max-w-[425px] bg-white">
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                        <FormField
-                            control={form.control}
-                            name="email"
-                            render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Email Address</FormLabel>
-                            <FormControl>
-                                <Input placeholder="shadcn" {...field} />
-                            </FormControl>
-                            
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="full_name"
-                            render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Full Name</FormLabel>
-                            <FormControl>
-                                <Input placeholder="shadcn" {...field} />
-                            </FormControl>
-                            
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                            <Popover open={open} onOpenChange={setOpen}>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                    variant="outline"
-                                    role="combobox"
-                                    aria-expanded={open}
-                                    className="w-full justify-between"
+                            <TableRow className="border-[#cbd5e1] border-b" key={user.id}>
+                                <TableCell className="w-[10px]">
+                                    <Checkbox className="border border-[#cbd5e1] rounded" />
+                                </TableCell>
+                                <TableCell className="font-semibold text-[11px]">{user.full_name}</TableCell>
+                                <TableCell className="text-[11px]">{user.email}</TableCell>
+                                <TableCell>
+                                    <div className={` w-fit px-3 py-1 rounded-full font-normal text-[11px] 
+                                        ${user.role === 'Administrator'? 'text-blue-600 bg-[#f0f6fe]' : 
+                                        user.role === 'Sales Manager'? 'text-[#0f973d] bg-[#e7f6ec]' : 'text-[#f58a07] bg-[#fef4e6]'} `}
                                     >
-                                    {value
-                                        ? frameworks.find((framework) => framework.value === value)?.label
-                                        : "Select role..."}
-                                    <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[350px] bg-white p-0">
-                                    <Command>
-                                    <CommandInput placeholder="Search Role..." className="h-9" />
-                                    <CommandList>
-                                        <CommandEmpty>No role found.</CommandEmpty>
-                                        <CommandGroup>
-                                        {frameworks.map((framework) => (
-                                            <CommandItem
-                                            key={framework.value}
-                                            value={framework.value}
-                                            onSelect={(currentValue) => {
-                                                setValue(currentValue === value ? "" : currentValue)
-                                                setOpen(false)
-                                            }}
-                                            >
-                                            {framework.label}
-                                            <CheckIcon
-                                                className={cn(
-                                                "ml-auto h-4 w-4",
-                                                value === framework.value ? "opacity-100" : "opacity-0"
-                                                )}
-                                            />
-                                            </CommandItem>
-                                        ))}
-                                        </CommandGroup>
-                                    </CommandList>
-                                    </Command>
-                                </PopoverContent>
-                            </Popover>
+                                    {user.role}
+                                    </div>
+                                </TableCell>
+                                <TableCell className="">
+                                    <div className="flex gap-3 font-semibold text-[11px] justify-end">
+                                        <p className=" text-blue-600 cursor-pointer" onClick={()=>handleEdit(user)}>View</p>
+                                        <p className="cursor-pointer" onClick={()=>handleRemove(user)}>Remove</p>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                            ))
+                        }
+                    
+                    </TableBody>
+               
 
-                        <FormField
-                            control={form.control}
-                            name="password"
-                            render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Password</FormLabel>
-                            <FormControl>
-                                <Input placeholder="shadcn" {...field} />
-                            </FormControl>
-                            
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                        <Button type="submit" className="w-full bg-blue-600 text-white rounded">Add User</Button>
-                    </form>
-                </Form>
+                </Table>
 
-                </DialogContent>
-                </DialogOverlay>
-            </Dialog>
+           
 
-
-            </div>
+            </div>}
+            {
+                users.length === 0 && (
+                    <div className="bg-white text-center px-2 py-5 font-semibold mt-7 rounded text-sm text-[#98a2b3]">
+                        NO USER AVAILABLE
+                    </div>
+                )
+            }
+            {isDialogOpen && <Modal 
+                createUser={createUser}
+                updateUser={updateUser}
+                isDialogOpen={isDialogOpen} 
+                setIsDialogOpen={setIsDialogOpen}
+                loader={loader}
+                actionType={actionType}
+                selectedUser={selectedUser}
+                deleteUser = {deleteUser}
+            />}
 
         </div>
 
