@@ -74,7 +74,7 @@ import {
 import { Label } from "@/components/ui/label"
   
 import Image from "next/image"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import axios from "axios"
 import Modal from "@/components/Modal/Modal"
 import { useToast } from "@/components/ui/use-toast"
@@ -94,7 +94,7 @@ const UsersAndRoles = () => {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     const [loader, setLoader] = useState(false)
-    const [loading, setLoading] = useState(false)
+    const loaded = useRef(false)
 
     const [users, setUsers] = useState<User[]>([])
     const [refetch, setRefetch] = useState(false)
@@ -116,12 +116,16 @@ const UsersAndRoles = () => {
 
     useEffect(()=>{
         const fetchUsers = async ()=>{
+            
             try {
                 
                 const {data} = await axios.get(baseurl)
                 setUsers(data)
+               loaded.current = true
             } catch (error) {
                 console.log(error)
+                loaded.current = true
+               
             }
         }
 
@@ -335,9 +339,16 @@ const UsersAndRoles = () => {
 
             </div>}
             {
-                users.length === 0 && (
+                users.length === 0 && loaded.current && (
                     <div className="bg-white text-center px-2 py-5 font-semibold mt-7 rounded text-sm text-[#98a2b3]">
                         NO USER AVAILABLE
+                    </div>
+                )
+            }
+            {
+                users.length === 0 && !loaded.current && (
+                    <div className="bg-white text-center px-2 py-5 font-semibold mt-7 rounded text-sm text-[#98a2b3]">
+                        Loading users...
                     </div>
                 )
             }
